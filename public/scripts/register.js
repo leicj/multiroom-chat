@@ -31,6 +31,7 @@ var RegisterForm = React.createClass({
       type: 'POST',
       data: this.state,
       success: function(rs) {
+        console.log(rs);
       }.bind(this),
       error: function(xhr, status, err) {
       }.bind(this)
