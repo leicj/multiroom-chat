@@ -1,0 +1,35 @@
+# 数据库的设计
+数据库: multiroom
+multiroom下的数据表
+1. users: 存储用户信息
+  username: 用户名(具有唯一性),字符串
+  nickname: 昵称
+  password: 密码(不可明文,必须加密),字符串
+  status: 是否在线("1":在线,"0":不在线)
+
+2. charinfo: 存储所有的用户关联信息
+  users: 所有的用户,数组
+	mapusers: 用户的关联关系,数组
+
+备注: charinfo的设计目的:
+	假设有三个用户,leicj,lgt,hqc,那么当我们注册leicj时,baseinfo为:
+users: [leicj]
+mapusers: []
+	注册lgt时,baseinfo为:
+users: [leicj, lgt]
+mapusers: [leicj_lgt]
+	注册hqc时,baseinfo为:
+users: [leicj, lgt, hqc]
+mapusers: [leicj_lgt, leicj_hqc, lgt_hqc]
+	这样能保证leicj和lgt的聊天记录,在同一张数据表中.所以multiroom中有如下数据表:
+users: 存储用户信息
+leicj_lgt: leicj用户和lgt用户的聊天记录
+leicj_hqc: leicj用户和hqc用户的聊天记录
+lgt_hqc: lgt用户和hqc用户的聊天记录
+
+leicj_lgt的数据表记录为:
+	from: leicj(发送者username)
+	to: lgt(接收者username)
+	time: 时间戳
+	message: "你好,lgt"
+	status: "1"(已读),"0"(未读),任何非"1"的都标记为"未读"
