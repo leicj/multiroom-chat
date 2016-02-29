@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>聊天室</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap/css/bootstrap.min.css">
+    <style media="screen">
+      button{
+        display:block;
+        margin-bottom:10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="currentUser" name="<%= currentname %>">
+      <label>当前用户:<%= currentname %></label>
+    </div>
+    <br />
+    <div id="userList">
+      <% users.forEach(function(name) { %>
+        <% if(name !== currentname && name) {%>
+          <button class="userForm" to='<%= name %>'><%= name %></button>
+        <% } %>
+      <% }) %>
+    </div>
+
+    <div class="modal fade in msgform" id="login-box">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title"></h4>
+          </div>
+          <div class="modal-body">
+  	        <form class="form-horizontal" action="" method="post">
+    					<div class="form-group" style="margin-bottom: 0px;">
+    						<textarea class="chatmessages col-md-12 form-control" rows="10" class="form-control" readonly></textarea>
+    					</div>
+    					<div class="form-group" style="margin-top:5px;">
+    						<textarea class="message col-md-12 form-control" style="margin-bottom:5px;" rows="3" name="message"></textarea>
+    							<button type="button" class="btn pull-right btn-sm btn-default btn-close" data-dismiss="modal" style="margin-left:5px;">关闭</button>
+    						<button class="btn btn-sm btn-success pull-right sendmsg" type="button">发送</button>&nbsp;&nbsp;
+    					</div>
+    				</form>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<script src="/javascripts/jquery-2.0.3.min.js"></script>
+<script src="/javascripts/bootstrap/js/bootstrap.min.js"></script>
+<script src="/javascripts/socket.io.js"></script>
+<script type="text/javascript">
+$(function() {
+  var socket = io();
+  var from = $('#currentUser').attr('name');
+
+  // 点击用户进行聊天
+  $('.userForm').on('click', function() {
+    var to = $(this).attr('to');
+    $('.msgform').find('.modal-title').html(from + '和' + to + '的聊天');
+    $('.msgform').find('.sendmsg').attr('from', from);
+    $('.msgform').find('.sendmsg').attr('to', to);
+    $('.msgform').modal('show');
+  });
+
+  // 更新对话框
+  function updateMsgForm(message) {
+    var chatmessages = $('.msgform').find('.chatmessages').val();
+    chatmessages += message;
+    $('.msgform').find('.chatmessages').val(chatmessages);
+  }
+  // 发送信息
+  $('.sendmsg').on('click', function() {
+    var to = $(this).attr('to');
+    var msg = $('.message').val();
+    if (from && to && msg) {
+      socket.emit('chat message', from, to, msg);
+      var message = from + " " + new Date().toLocaleString() + "\n" + msg + "\n";
+      updateMsgForm(message);
+      $('.message').val('');
+    }
+  });
+
+  // 接收信息
+  socket.on(from + '_message', function(from, msg, time) {
+    var message = from + "  " + new Date(time).toLocaleString() + "\n" + msg + '\n';
+    updateMsgForm(message);
+  });
+
+});
+
+</script>
+  </body>
+</html>

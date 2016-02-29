@@ -7,7 +7,7 @@ multiroom下的数据表
   password: 密码(不可明文,必须加密),字符串
   status: 是否在线("1":在线,"0":不在线)
 
-2. charinfo: 存储所有的用户关联信息
+2. chatinfos: 存储所有的用户关联信息
   users: 所有的用户,数组
 	mapusers: 用户的关联关系,数组
 

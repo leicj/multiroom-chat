@@ -20,6 +20,7 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+var io = require('socket.io')(server);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -28,6 +29,63 @@ var server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+/**
+  * socket.io数据处理模块
+  *
+ */
+var mongoose = require('mongoose');
+// 连接数据库
+var db = mongoose.createConnection('localhost', 'multiroom');
+db.on('error', function(err) {
+ console.error(err);
+});
+var Schema = mongoose.Schema;
+// 聊天信息表
+var ChatSchema = new Schema({
+ from: String,
+ to: String,
+ time: Number,
+ msg: String,
+ status: String
+});
+
+// 获取用户关联表的信息
+var ChatinfoSchema = new Schema({
+ users: Array,
+ mapusers: Array
+});
+var ChatinfoModel = db.model('chatinfos', ChatinfoSchema);
+var chatinfo = {};
+ChatinfoModel.findOne({}, function(err, data) {
+ if (err) throw err;
+ chatinfo = data;
+});
+io.on('connection', function(socket) {
+  console.log('a user connect');
+  // 处理所有的聊天信息,所传递的参数包括: from(发送者), to(接收者), msg(聊天信息)
+  socket.on('chat message', function(from, to, msg) {
+    var time = Date.now();
+    // 将聊天信息存入数据库中
+    if (chatinfo.users) {
+      var ChatModel = db.model(from + "_" + to, ChatSchema);
+      if (chatinfo.users.indexOf(from) > chatinfo.users.indexOf(to)) {
+        ChatModel = db.model(to + "_" + from, ChatSchema);
+      }
+      var chat = new ChatModel();
+      chat.from = from;
+      chat.to = to;
+      chat.time = Date.now();
+      chat.msg = msg;
+      chat.save(function(err) {
+        if (err) throw err;
+      });
+    }
+
+    // 将信息发送给to(接收者)
+    io.emit(to + '_message', from, msg, time);
+  });
+});
 
 /**
  * Normalize a port into a number, string, or false.
